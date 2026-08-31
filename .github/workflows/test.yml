@@ -1,0 +1,60 @@
+name: VB-G RAM G Browser Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  browser-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install --with-deps chromium
+
+      - name: Open VB-G RAM G
+        run: |
+          cat > test.js <<'EOF'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch({headless: true});
+            const page = await browser.newPage();
+
+            console.log("Opening VB-G RAM G...");
+
+            const response = await page.goto(
+              'https://vbgramgrep.dord.gov.in/vbgramg/homeblue-theme/home_gramg.aspx',
+              {
+                waitUntil: 'domcontentloaded',
+                timeout: 60000
+              }
+            );
+
+            console.log("HTTP Status:", response ? response.status() : "No response");
+            console.log("Page Title:", await page.title());
+            console.log("Page URL:", page.url());
+
+            await page.screenshot({
+              path: 'vbgramg-test.png',
+              fullPage: true
+            });
+
+            await browser.close();
+          })();
+          EOF
+
+          node test.js
+
+      - name: Save Screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: vbgramg-test
+          path: vbgramg-test.png
