@@ -1,4 +1,4 @@
-name: VB-G RAM G Browser Test
+name: VB-G RAM G Direct URL Test
 
 on:
   workflow_dispatch:
@@ -19,31 +19,33 @@ jobs:
           npm install playwright
           npx playwright install --with-deps chromium
 
-      - name: Open VB-G RAM G
+      - name: Open Direct Report URL
+        env:
+          VBGRAMG_URL: ${{ secrets.VBGRAMG_URL }}
         run: |
           cat > test.js <<'EOF'
           const { chromium } = require('playwright');
 
           (async () => {
-            const browser = await chromium.launch({headless: true});
+            const browser = await chromium.launch({
+              headless: true
+            });
+
             const page = await browser.newPage();
 
-            console.log("Opening VB-G RAM G...");
+            console.log("Opening direct VB-G RAM G report...");
 
-            const response = await page.goto(
-              'https://vbgramgrep.dord.gov.in/vbgramg/homeblue-theme/home_gramg.aspx',
-              {
-                waitUntil: 'domcontentloaded',
-                timeout: 60000
-              }
-            );
+            const response = await page.goto(process.env.VBGRAMG_URL, {
+              waitUntil: 'domcontentloaded',
+              timeout: 60000
+            });
 
             console.log("HTTP Status:", response ? response.status() : "No response");
             console.log("Page Title:", await page.title());
-            console.log("Page URL:", page.url());
+            console.log("Final URL:", page.url());
 
             await page.screenshot({
-              path: 'vbgramg-test.png',
+              path: 'report-test.png',
               fullPage: true
             });
 
@@ -53,8 +55,8 @@ jobs:
 
           node test.js
 
-      - name: Save Screenshot
+      - name: Save Report Screenshot
         uses: actions/upload-artifact@v4
         with:
-          name: vbgramg-test
-          path: vbgramg-test.png
+          name: vbgramg-report-test
+          path: report-test.png
